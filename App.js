@@ -1,44 +1,11 @@
 /**
- * app.js
- * Lógica principal: VS IA (Stockfish) + Multijugador (Firebase)
+ * App.js
+ * VS IA (Stockfish) + Multijugador P2P (PeerJS — sin base de datos)
  */
 import { Chess } from './chess.min.js';
 import { INITIAL_IDENTITIES, PIECE_LORE, pieceImagePath, pieceUnicode } from './Lore.js';
 import { initEngine, getBestMove, destroyEngine }                        from './Engine.js';
 import { getCurrentDepth, levelUp }                                      from './Progesion.js';
-
-// ── Configuración Firebase (solo se usa en modo multijugador) ──────────
-const firebaseConfig = {
-  apiKey:            'TU_API_KEY',
-  authDomain:        'TU_PROJECT.firebaseapp.com',
-  databaseURL:       'https://TU_PROJECT-default-rtdb.firebaseio.com',
-  projectId:         'TU_PROJECT',
-  storageBucket:     'TU_PROJECT.appspot.com',
-  messagingSenderId: 'TU_SENDER_ID',
-  appId:             'TU_APP_ID',
-};
-
-let db        = null;
-let fbRef     = null;
-let fbSet     = null;
-let fbOnValue = null;
-
-async function ensureFirebase() {
-  if (db) return true;
-  try {
-    const { initializeApp }                  = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js');
-    const { getDatabase, ref, set, onValue } = await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js');
-    const app = initializeApp(firebaseConfig);
-    db        = getDatabase(app);
-    fbRef     = ref;
-    fbSet     = set;
-    fbOnValue = onValue;
-    return true;
-  } catch (e) {
-    alert('Error conectando con Firebase. Revisa la configuracion en app.js.');
-    return false;
-  }
-}
 
 // ════════════════════════════════════════════════════════════════
 //  ESTADO
@@ -50,8 +17,11 @@ let legalTargets = [];
 let lastMove     = null;
 let isAiEnabled  = false;
 let gameId       = null;
-let fbUnsub      = null;
-let isLocalUpd   = false;
+
+// ── PeerJS ──────────────────────────────────────────────────────
+let peer       = null;   // instancia Peer local
+let conn       = null;   // conexión con el oponente
+let myColor    = null;   // 'w' (crea sala) o 'b' (se une)
 
 // ════════════════════════════════════════════════════════════════
 //  DOM
@@ -90,7 +60,12 @@ function showGame() {
 }
 
 function goMenu() {
-  if (fbUnsub) { fbUnsub(); fbUnsub = null; }
+  // Cerrar conexión P2P si existe
+  if (conn)  { conn.close();  conn  = null; }
+  if (peer)  { peer.destroy(); peer = null; }
+  myColor = null;
+  gameId  = null;
+
   destroyEngine();
   modalEl.classList.add('hidden');
   screenGame.classList.add('hidden');
@@ -99,7 +74,7 @@ function goMenu() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  CREAR INSTANCIA CHESS — window.Chess cargado como script normal
+//  CHESS
 // ════════════════════════════════════════════════════════════════
 function newChess(fen) {
   try {
@@ -110,9 +85,6 @@ function newChess(fen) {
   }
 }
 
-// ════════════════════════════════════════════════════════════════
-//  RESET
-// ════════════════════════════════════════════════════════════════
 function resetState() {
   chess        = newChess();
   identities   = { ...INITIAL_IDENTITIES };
@@ -124,98 +96,129 @@ function resetState() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  INICIAR PARTIDA VS IA
+//  VS IA
 // ════════════════════════════════════════════════════════════════
 function startAiGame() {
   resetState();
   if (!chess) return;
-
   isAiEnabled = true;
   gameId      = null;
+  myColor     = 'w';
   codeBox.classList.add('hidden');
-
   showGame();
   renderBoard();
   updateTurnInfo();
-
   initEngine().catch(() => {});
 }
 
 // ════════════════════════════════════════════════════════════════
-//  MULTIJUGADOR — Crear
+//  MULTIJUGADOR — Crear sala
+//  El jugador A crea un Peer con ID aleatorio.
+//  Ese ID es el código que comparte con el jugador B.
 // ════════════════════════════════════════════════════════════════
-async function createGame() {
-  const ok = await ensureFirebase();
-  if (!ok) return;
+function createGame() {
+  if (!window.Peer) {
+    alert('peerjs.min.js no encontrado.\nDescárgalo y ponlo junto a index.html.');
+    return;
+  }
 
   resetState();
   if (!chess) return;
 
-  isAiEnabled          = false;
-  gameId               = Math.random().toString(36).substring(2, 7).toUpperCase();
-  codeText.textContent = gameId;
-  codeBox.classList.remove('hidden');
+  isAiEnabled = false;
+  myColor     = 'w';   // quien crea juega con blancas
 
-  showGame();
-  renderBoard();
-  updateTurnInfo();
-  pushFirebase();
-  subscribeFirebase();
+  // Crear peer con ID corto legible
+  gameId = Math.random().toString(36).substring(2, 7).toUpperCase();
+  peer   = new Peer(gameId);
+
+  peer.on('error', (e) => alert('Error PeerJS: ' + e.message));
+
+  peer.on('open', (id) => {
+    // Peer registrado — mostrar código
+    codeText.textContent = id;
+    codeBox.classList.remove('hidden');
+    showGame();
+    renderBoard();
+    updateTurnInfo();
+    turnInfoEl.textContent = 'Esperando oponente...';
+  });
+
+  // Cuando el jugador B se conecte
+  peer.on('connection', (c) => {
+    conn = c;
+    setupConnection();
+    turnInfoEl.textContent = '¡Oponente conectado! Turno: BLANCAS';
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
-//  MULTIJUGADOR — Unirse
+//  MULTIJUGADOR — Unirse a sala
+//  El jugador B introduce el código del jugador A y se conecta.
 // ════════════════════════════════════════════════════════════════
-async function joinGame() {
+function joinGame() {
   const code = document.getElementById('join-input').value.trim().toUpperCase();
   if (code.length < 4) return;
 
-  const ok = await ensureFirebase();
-  if (!ok) return;
+  if (!window.Peer) {
+    alert('peerjs.min.js no encontrado.\nDescárgalo y ponlo junto a index.html.');
+    return;
+  }
 
   resetState();
   if (!chess) return;
 
-  isAiEnabled          = false;
-  gameId               = code;
-  codeText.textContent = gameId;
-  codeBox.classList.remove('hidden');
+  isAiEnabled = false;
+  myColor     = 'b';   // quien se une juega con negras
+  gameId      = code;
 
-  showGame();
-  subscribeFirebase();
-}
+  peer = new Peer();   // ID aleatorio para B, no necesita ser visible
 
-// ════════════════════════════════════════════════════════════════
-//  FIREBASE
-// ════════════════════════════════════════════════════════════════
-function pushFirebase() {
-  if (!gameId || !db) return;
-  isLocalUpd = true;
-  fbSet(fbRef(db, `games/${gameId}`), {
-    fen:        chess.fen(),
-    identities: identities,
-    updatedAt:  Date.now(),
-  });
-}
+  peer.on('error', (e) => alert('Error PeerJS: ' + e.message));
 
-function subscribeFirebase() {
-  if (!gameId || !db) return;
-  const unsub = fbOnValue(fbRef(db, `games/${gameId}`), (snap) => {
-    const data = snap.val();
-    if (!data) return;
-    if (isLocalUpd) { isLocalUpd = false; return; }
+  peer.on('open', () => {
+    // Conectar con el peer del jugador A usando su código
+    conn = peer.connect(code);
+    setupConnection();
 
-    chess        = newChess(data.fen);
-    identities   = data.identities || {};
-    selectedSq   = null;
-    legalTargets = [];
-    lastMove     = null;
-
+    codeText.textContent = code;
+    codeBox.classList.remove('hidden');
+    showGame();
     renderBoard();
     updateTurnInfo();
-    checkEndGame();
+    turnInfoEl.textContent = 'Conectando...';
   });
-  fbUnsub = unsub;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PEERJS — configurar listeners de la conexión
+// ════════════════════════════════════════════════════════════════
+function setupConnection() {
+  conn.on('open', () => {
+    updateTurnInfo();
+  });
+
+  // Recibir movimiento del oponente
+  conn.on('data', (data) => {
+    if (data.type === 'move') {
+      const move = chess.move({
+        from:      data.from,
+        to:        data.to,
+        promotion: data.promotion || 'q',
+      });
+      if (move) {
+        applyMove(move, false); // false = no reenviar al oponente
+      }
+    }
+  });
+
+  conn.on('close', () => {
+    turnInfoEl.textContent = 'Oponente desconectado.';
+  });
+
+  conn.on('error', (e) => {
+    console.error('[P2P]', e);
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -225,16 +228,19 @@ function onSquareClick(sq) {
   const piece = chess.get(sq);
   const id    = identities[sq];
 
-  // Mostrar lore de cualquier pieza tocada
   if (id) showLore(id);
 
   if (chess.game_over()) return;
+
+  // En modo IA: solo mueve blancas en su turno
   if (isAiEnabled && chess.turn() === 'b') return;
+
+  // En modo P2P: solo mueves tu color en tu turno
+  if (!isAiEnabled && myColor && chess.turn() !== myColor) return;
 
   if (!selectedSq) {
     if (!piece) return;
-    if (isAiEnabled  && piece.color !== 'w')          return;
-    if (!isAiEnabled && piece.color !== chess.turn()) return;
+    if (piece.color !== chess.turn()) return;
     selectedSq   = sq;
     legalTargets = chess.moves({ square: sq, verbose: true }).map(m => m.to);
     renderBoard();
@@ -255,7 +261,7 @@ function onSquareClick(sq) {
   const move = chess.move({ from, to: sq, promotion: 'q' });
 
   if (!move) {
-    if (piece && (isAiEnabled ? piece.color === 'w' : piece.color === chess.turn())) {
+    if (piece && piece.color === chess.turn()) {
       selectedSq   = sq;
       legalTargets = chess.moves({ square: sq, verbose: true }).map(m => m.to);
     }
@@ -263,15 +269,16 @@ function onSquareClick(sq) {
     return;
   }
 
-  applyMove(move);
-  if (!isAiEnabled) pushFirebase();
+  applyMove(move, true); // true = enviar al oponente
+
   if (isAiEnabled && !chess.game_over() && chess.turn() === 'b') doAiMove();
 }
 
 // ════════════════════════════════════════════════════════════════
 //  APLICAR MOVIMIENTO
+//  send=true → enviar el movimiento al oponente por PeerJS
 // ════════════════════════════════════════════════════════════════
-function applyMove(move) {
+function applyMove(move, send = false) {
   if (move.flags.includes('e')) delete identities[move.to[0] + move.from[1]];
   if (move.captured)            delete identities[move.to];
 
@@ -294,6 +301,16 @@ function applyMove(move) {
   lastMove = { from: move.from, to: move.to };
   if (identities[move.to]) showLore(identities[move.to]);
 
+  // Enviar movimiento al oponente si es nuestro turno
+  if (send && conn && conn.open) {
+    conn.send({
+      type:      'move',
+      from:      move.from,
+      to:        move.to,
+      promotion: move.promotion || 'q',
+    });
+  }
+
   renderBoard();
   updateTurnInfo();
   checkEndGame();
@@ -310,18 +327,16 @@ function doAiMove() {
       const moves = chess.moves({ verbose: true });
       if (!moves.length) return;
       const m = chess.move(moves[Math.floor(Math.random() * moves.length)]);
-      if (m) applyMove(m);
+      if (m) applyMove(m, false);
       return;
     }
     const m = chess.move({ from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || 'q' });
-    if (m) applyMove(m);
+    if (m) applyMove(m, false);
   });
 }
 
 // ════════════════════════════════════════════════════════════════
 //  RENDERIZAR TABLERO
-//  — Las piezas se muestran como iconos unicode, no como imágenes
-//  — La imagen del personaje solo aparece en la lore card inferior
 // ════════════════════════════════════════════════════════════════
 function renderBoard() {
   boardEl.innerHTML = '';
@@ -353,17 +368,11 @@ function renderBoard() {
       if (lastMove && (sq === lastMove.from || sq === lastMove.to)) div.classList.add('last-move');
       if (legalTargets.includes(sq)) div.classList.add(piece ? 'legal-capture' : 'legal');
 
-      // ── ICONO UNICODE — símbolos rellenos para ambos colores ──
       if (piece) {
-        // Usamos siempre los símbolos negros (rellenos) ♚♛♜♝♞♟
-        // y los coloreamos con CSS para blancos/negros
-        const FILLED = {
-          k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟'
-        };
+        const FILLED = { k:'♚', q:'♛', r:'♜', b:'♝', n:'♞', p:'♟' };
         const span = document.createElement('span');
         span.className   = 'piece-unicode';
         span.textContent = FILLED[piece.type] || '?';
-
         if (piece.color === 'w') {
           span.style.color      = '#ffffff';
           span.style.textShadow = '0 0 2px #000, 0 0 4px #000, 1px 1px 3px #000, -1px -1px 3px #000';
@@ -394,26 +403,23 @@ function updateTurnInfo() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  LORE CARD — imagen del personaje + descripción al tocar pieza
+//  LORE CARD
 // ════════════════════════════════════════════════════════════════
 function showLore(id) {
   const lore = PIECE_LORE[id];
   if (!lore) return;
 
-  // Imagen del personaje con fallback unicode si no carga
-  const parts   = id.split('_');             // ['w','p','e2']
-  const FILLED  = { k:'♚', q:'♛', r:'♜', b:'♝', n:'♞', p:'♟' };
-  const symbol  = FILLED[parts[1]] || '?';
+  const parts  = id.split('_');
+  const FILLED = { k:'♚', q:'♛', r:'♜', b:'♝', n:'♞', p:'♟' };
+  const symbol = FILLED[parts[1]] || '?';
 
-  loreAvatar.style.display  = 'block';
-  loreAvatar.style.fontSize = '';
-  loreAvatar.src            = pieceImagePath(id);
-  loreAvatar.onerror        = function() {
-    // Si no hay imagen, mostrar símbolo unicode grande en su lugar
+  loreAvatar.style.display = 'block';
+  loreAvatar.src           = pieceImagePath(id);
+  loreAvatar.onerror       = function() {
     this.style.display = 'none';
     let fallback = document.getElementById('lore-avatar-fallback');
     if (!fallback) {
-      fallback = document.createElement('span');
+      fallback           = document.createElement('span');
       fallback.id        = 'lore-avatar-fallback';
       fallback.className = 'lore-avatar-fallback';
       this.parentNode.insertBefore(fallback, this);
@@ -421,7 +427,6 @@ function showLore(id) {
     fallback.textContent   = symbol;
     fallback.style.display = 'flex';
   };
-  // Si la imagen carga bien, ocultar el fallback si existiera
   loreAvatar.onload = function() {
     const fallback = document.getElementById('lore-avatar-fallback');
     if (fallback) fallback.style.display = 'none';
@@ -496,7 +501,7 @@ function checkEndGame() {
 // ════════════════════════════════════════════════════════════════
 function shareCode() {
   if (!gameId) return;
-  const text = `Juega conmigo! Codigo: ${gameId}`;
+  const text = `Juega conmigo al ajedrez! Codigo de sala: ${gameId}`;
   if (navigator.share) navigator.share({ title: 'CHESS', text }).catch(() => {});
   else navigator.clipboard.writeText(text).then(() => alert('Codigo copiado: ' + gameId));
 }
