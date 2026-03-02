@@ -342,6 +342,13 @@ function renderBoard() {
   boardEl.innerHTML = '';
   const board = chess.board();
 
+  // Girar tablero si el jugador juega con negras
+  if (myColor === 'b') {
+    boardEl.classList.add('flipped');
+  } else {
+    boardEl.classList.remove('flipped');
+  }
+
   let checkSq = null;
   if (chess.in_check()) {
     const t = chess.turn();
