@@ -66,6 +66,8 @@ html, body {
   font-family: var(--font);
   background-color: var(--bg);
   color: var(--cream);
+  overflow: hidden; 
+  position: fixed;
 }
 
 body {
@@ -739,4 +741,32 @@ body {
   .lore-name     { font-size: 13px; }
   .lore-desc     { font-size: 11px; }
   .modal-title   { font-size: 18px; }
+}
+
+/* ── Indicador de nivel del motor ── */
+.level-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(240,217,181,0.2);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.level-label {
+  font-family: var(--font);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: rgba(240,217,181,0.5);
+}
+
+.level-value {
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cream);
+  min-width: 18px;
+  text-align: center;
 }

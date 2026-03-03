@@ -4,80 +4,48 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CHESS</title>
-    <meta
-      name="description"
-      content="Juego de ajedrez con IA Stockfish y multijugador online. Desarrollado con JavaScript, HTML5 y Firebase."
-    />
-    <meta
-      name="keywords"
-      content="ajedrez, chess, juego de ajedrez, stockfish, inteligencia artificial, multijugador online, firebase, javascript, html5"
-    />
+    <meta name="description" content="Juego de ajedrez con IA Stockfish y multijugador online. Desarrollado con JavaScript, HTML5 y Firebase." />
+    <meta name="keywords" content="ajedrez, chess, juego de ajedrez, stockfish, inteligencia artificial, multijugador online, firebase, javascript, html5" />
     <meta name="author" content="Programador GBA" />
-
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="icon" href="img/logo-pequeñol.webp" type="image/webp" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- ══════════════════════════════════════════
-       PANTALLA INICIAL
-  ══════════════════════════════════════════ -->
+    <!-- PANTALLA INICIAL -->
     <div id="screen-menu">
       <div class="menu-card">
         <div class="title-wrapper">
-          <img
-            id="app-icon"
-            src="img/app_icon.webp"
-            alt="Chess icon"
-            class="title-icon"
-            onerror="this.style.display = 'none'"
-          />
+          <img id="app-icon" src="img/app_icon.webp" alt="Chess icon" class="title-icon" onerror="this.style.display = 'none'" />
           <div class="title-text">
             <h1 class="menu-title">CHESS</h1>
             <p class="menu-subtitle">ELIGE TU DESTINO</p>
           </div>
         </div>
-
-        <!-- VS IA -->
         <button class="menu-btn btn-light" id="btn-vs-ai">STOCKFISH IA</button>
-
         <div class="separator"></div>
-
-        <!-- Multijugador -->
         <div class="multiplayer-section">
-          <button class="menu-btn btn-dark" id="btn-create">
-            CREAR PARTIDA
-          </button>
-
+          <button class="menu-btn btn-dark" id="btn-create">CREAR PARTIDA</button>
           <div class="join-row">
-            <input
-              id="join-input"
-              class="menu-input"
-              type="text"
-              placeholder="CÓDIGO"
-              maxlength="8"
-              autocomplete="off"
-              autocapitalize="characters"
-            />
+            <input id="join-input" class="menu-input" type="text" placeholder="CÓDIGO" maxlength="8" autocomplete="off" autocapitalize="characters" />
             <button class="join-btn" id="btn-join">UNIRSE</button>
           </div>
         </div>
       </div>
-      <!-- /menu-card -->
     </div>
-    <!-- /screen-menu -->
 
-    <!-- ══════════════════════════════════════════
-       PANTALLA DE JUEGO
-  ══════════════════════════════════════════ -->
+    <!-- PANTALLA DE JUEGO -->
     <div id="screen-game" class="hidden">
       <div class="game-top-bar">
         <button class="back-btn" id="btn-back">← VOLVER</button>
+
+        <!-- Nivel del motor — solo visible en modo VS IA -->
+        <div id="level-display" class="level-display hidden">
+          <span class="level-label">NIVEL</span>
+          <span class="level-value" id="level-value">1</span>
+        </div>
 
         <div id="game-code-display" class="game-code hidden">
           <span id="game-code-text"></span>
@@ -85,20 +53,16 @@
         </div>
 
         <div id="thinking-indicator" class="thinking hidden">
-          <span class="dot"></span><span class="dot"></span
-          ><span class="dot"></span>
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
         </div>
       </div>
 
-      <!-- Tablero -->
       <div class="board-frame">
         <div id="board"></div>
       </div>
 
-      <!-- Info de turno -->
       <div id="turn-info" class="turn-info">Selecciona una pieza...</div>
 
-      <!-- Lore card -->
       <div class="lore-card" id="lore-card">
         <div class="lore-empty" id="lore-empty">Selecciona una pieza...</div>
         <div class="lore-content hidden" id="lore-content">
@@ -110,47 +74,23 @@
         </div>
       </div>
     </div>
-    <!-- /screen-game -->
 
-    <!-- ══════════════════════════════════════════
-       MODAL DE VICTORIA
-  ══════════════════════════════════════════ -->
+    <!-- MODAL DE VICTORIA -->
     <div id="modal-overlay" class="modal-overlay hidden">
       <div class="modal-box">
-        <!-- Etiqueta de resultado: VICTORIA / DERROTA / TABLAS -->
         <p class="modal-result-label" id="modal-result-label"></p>
-
-        <!-- Imagen del personaje que dio jaque mate -->
         <div class="modal-avatar-wrapper">
-          <img
-            id="modal-avatar"
-            src=""
-            alt=""
-            class="modal-avatar"
-            onerror="this.style.display = 'none'"
-          />
+          <img id="modal-avatar" src="" alt="" class="modal-avatar" onerror="this.style.display = 'none'" />
         </div>
-
-        <!-- Nombre del personaje -->
         <h2 class="modal-char-name" id="modal-char-name"></h2>
-
-        <!-- Frase dramática en la voz del personaje -->
         <p class="modal-quote" id="modal-quote"></p>
-
-        <!-- Línea separadora -->
         <div class="modal-divider"></div>
-
-        <!-- Subtexto: lado ganador -->
         <p class="modal-side" id="modal-side"></p>
-
-        <button class="menu-btn btn-light" id="btn-modal-continue">
-          CONTINUAR
-        </button>
+        <button class="menu-btn btn-light" id="btn-modal-continue">CONTINUAR</button>
       </div>
     </div>
 
-    <!-- Scripts separados -->
-     <script src="peerjs.min.js"></script>
+    <script src="peerjs.min.js"></script>
     <script type="module" src="App.js"></script>
   </body>
 </html>

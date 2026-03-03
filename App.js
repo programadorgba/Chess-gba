@@ -5,7 +5,7 @@
 import { Chess } from './chess.min.js';
 import { INITIAL_IDENTITIES, PIECE_LORE, pieceImagePath, pieceUnicode } from './Lore.js';
 import { initEngine, getBestMove, destroyEngine }                        from './Engine.js';
-import { getCurrentDepth, levelUp }                                      from './Progesion.js';
+import { getCurrentDepth, levelUp, getLevel } from './Progesion.js';
 
 // ════════════════════════════════════════════════════════════════
 //  ESTADO
@@ -66,6 +66,8 @@ function goMenu() {
   myColor = null;
   gameId  = null;
 
+  document.getElementById('level-display').classList.add('hidden');
+
   destroyEngine();
   modalEl.classList.add('hidden');
   screenGame.classList.add('hidden');
@@ -105,6 +107,11 @@ function startAiGame() {
   gameId      = null;
   myColor     = 'w';
   codeBox.classList.add('hidden');
+
+  // Mostrar nivel del motor
+  document.getElementById('level-display').classList.remove('hidden');
+  document.getElementById('level-value').textContent = getLevel();
+
   showGame();
   renderBoard();
   updateTurnInfo();
@@ -322,16 +329,19 @@ function applyMove(move, send = false) {
 function doAiMove() {
   thinkingEl.classList.remove('hidden');
   getBestMove(chess.fen(), getCurrentDepth(), (uci) => {
-    thinkingEl.classList.add('hidden');
-    if (!uci) {
-      const moves = chess.moves({ verbose: true });
-      if (!moves.length) return;
-      const m = chess.move(moves[Math.floor(Math.random() * moves.length)]);
+    // Delay de 700ms — da tiempo a ver el movimiento anterior
+    setTimeout(() => {
+      thinkingEl.classList.add('hidden');
+      if (!uci) {
+        const moves = chess.moves({ verbose: true });
+        if (!moves.length) return;
+        const m = chess.move(moves[Math.floor(Math.random() * moves.length)]);
+        if (m) applyMove(m, false);
+        return;
+      }
+      const m = chess.move({ from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || 'q' });
       if (m) applyMove(m, false);
-      return;
-    }
-    const m = chess.move({ from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || 'q' });
-    if (m) applyMove(m, false);
+    }, 700);
   });
 }
 
@@ -484,7 +494,10 @@ function checkEndGame() {
 
   if (chess.in_checkmate()) {
     const win = chess.turn() === 'b' ? 'w' : 'b';
-    if (isAiEnabled && win === 'w') levelUp();
+    if (isAiEnabled && win === 'w') {
+      levelUp();
+      document.getElementById('level-value').textContent = getLevel();
+    }
     labelEl.textContent    = isAiEnabled ? (win === 'w' ? 'VICTORIA' : 'DERROTA') : 'JAQUE MATE!';
     labelEl.className      = 'modal-result-label ' + (win === 'w' ? 'victory' : 'defeat');
     charNameEl.textContent = lore ? lore.name.toUpperCase() : '-';

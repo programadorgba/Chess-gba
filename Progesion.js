@@ -21,7 +21,7 @@
 
 const STORAGE_KEY = 'chess_ai_level';  // clave en localStorage
 const MIN_LEVEL   = 1;
-const MAX_LEVEL   = 12;
+const MAX_LEVEL   = 14;
 
 /**
  * Lee el nivel actual del jugador desde localStorage.
