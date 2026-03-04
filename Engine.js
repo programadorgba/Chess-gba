@@ -61,7 +61,7 @@ export function initEngine() {
 /**
  * Pide al motor el mejor movimiento para una posición FEN.
  * @param {string}   fen
- * @param {number}   depth     — profundidad de búsqueda (1–12)
+ * @param {number}   depth     — profundidad de búsqueda (1–14)
  * @param {Function} callback  — cb(ucimove: string | null)
  */
 export function getBestMove(fen, depth, callback) {

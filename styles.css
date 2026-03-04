@@ -62,18 +62,23 @@
 
 html, body {
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
+  max-height: 100vh;
   font-family: var(--font);
   background-color: var(--bg);
   color: var(--cream);
-  overflow: hidden; 
-  position: fixed;
+  overflow: hidden;          /* sin scroll */
+  position: fixed;           /* fija en móvil — evita el rebote iOS */
+  top: 0;
+  left: 0;
 }
 
 body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-y: auto;          /* solo el contenido interior scrollable si hace falta */
+  -webkit-overflow-scrolling: touch;
 }
 
 .hidden {
@@ -769,4 +774,285 @@ body {
   color: var(--cream);
   min-width: 18px;
   text-align: center;
+}
+
+
+
+/* ════════════════════════════════════════════════
+   BOTÓN CAMINO
+════════════════════════════════════════════════ */
+.btn-path {
+  background: linear-gradient(135deg, #3d1f00, #6b3800);
+  color: #f0d9b5;
+  border: 1px solid rgba(240,217,181,0.25);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.btn-path:hover { opacity: 0.9; transform: translateY(-2px); }
+
+/* ════════════════════════════════════════════════
+   PANTALLA CAMINO DEL CABALLERO
+════════════════════════════════════════════════ */
+#screen-path {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  overflow: hidden; z-index: 10;
+}
+#screen-path.hidden { display: none !important; }
+
+.path-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(240,217,181,0.1);
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.2);
+}
+.path-title {
+  flex: 1; font-size: 11px; letter-spacing: 0.18em;
+  color: rgba(240,217,181,0.6); font-weight: 700;
+  margin: 0; text-align: center;
+}
+.path-header-right {
+  display: flex; align-items: center; gap: 8px;
+}
+.path-header-level {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(240,217,181,0.2);
+  border-radius: 20px; padding: 3px 10px;
+}
+.change-piece-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(240,217,181,0.15);
+  border-radius: 8px; color: var(--cream);
+  font-size: 18px; cursor: pointer;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.change-piece-btn:hover { background: rgba(240,217,181,0.1); }
+
+/* Subtítulo con info de racha */
+.path-streak-info {
+  padding: 8px 16px;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: rgba(240,160,48,0.8); text-align: center;
+  background: rgba(240,160,48,0.06);
+  border-bottom: 1px solid rgba(240,160,48,0.1);
+  flex-shrink: 0;
+}
+
+.path-scroll {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 24px 8px 48px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ════════════════════════════════════════════════
+   MAPA — PATRÓN SERPIENTE
+════════════════════════════════════════════════ */
+.path-rows {
+  display: flex; flex-direction: column;
+  align-items: stretch; gap: 0;
+}
+
+/* Cada fila de nodos */
+.path-row {
+  display: flex; flex-direction: row;
+  align-items: flex-start; justify-content: center;
+  padding: 4px 8px;
+  gap: 0;
+}
+
+/* Conector horizontal entre nodos */
+.path-conn {
+  flex: 1; height: 4px; max-width: 20px;
+  align-self: center; margin-bottom: 40px;
+  background: rgba(240,217,181,0.12);
+  border-radius: 2px; flex-shrink: 0;
+}
+.path-conn.conn-done {
+  background: linear-gradient(90deg, rgba(240,217,181,0.5), rgba(240,160,48,0.5));
+}
+
+/* Curva de giro entre filas */
+.path-turn {
+  height: 28px;
+  border: 3px solid rgba(240,217,181,0.12);
+  border-top: none;
+  border-radius: 0 0 20px 20px;
+  margin: -2px 48px 0;
+}
+.path-turn.turn-right { margin-left: 48px; margin-right: auto; }
+.path-turn.turn-left  { margin-left: auto; margin-right: 48px; }
+.path-turn.conn-done  { border-color: rgba(240,217,181,0.4); }
+
+/* ════════════════════════════════════════════════
+   NODO
+════════════════════════════════════════════════ */
+.path-hex {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  flex-shrink: 0; width: 76px;
+}
+
+.hex-inner {
+  position: relative;
+  width: 68px; height: 68px;
+  border-radius: 16px;
+  background-color: rgba(255,255,255,0.05);
+  background-size: cover; background-position: center;
+  border: 2px solid rgba(240,217,181,0.1);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+}
+
+/* Capa oscura sobre la imagen para legibilidad */
+.hex-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.35);
+  border-radius: 14px;
+}
+
+.hex-bg-icon {
+  position: relative; z-index: 1;
+  font-size: 28px; line-height: 1;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9));
+}
+
+/* Figura del jugador — animada sobre el nodo actual */
+.hex-player {
+  position: absolute; bottom: 3px; right: 4px;
+  font-size: 22px; z-index: 3;
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,1));
+  animation: floatPiece 1.4s ease-in-out infinite;
+}
+@keyframes floatPiece {
+  0%,100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-5px) scale(1.05); }
+}
+
+.hex-check {
+  position: absolute; top: 4px; right: 6px;
+  font-size: 14px; color: #7dca6b; font-weight: 900;
+  z-index: 3; text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+}
+.hex-lock {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; z-index: 3;
+  background: rgba(0,0,0,0.45);
+  border-radius: 14px;
+}
+
+/* Etiqueta bajo el nodo */
+.hex-label {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 2px;
+  text-align: center; width: 76px;
+}
+.hex-name {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+  color: rgba(240,217,181,0.6); line-height: 1.2;
+}
+.hex-desc {
+  font-size: 8px; color: rgba(240,217,181,0.38);
+  font-style: italic; line-height: 1.2;
+}
+.hex-lv {
+  font-size: 8px; color: rgba(240,217,181,0.28); font-weight: 700;
+}
+
+/* Barra de progreso de racha (1/2 victorias) */
+.hex-streak {
+  width: 60px; height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden; margin-top: -2px;
+}
+.hex-streak-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, #f0a030, #f0d9b5);
+  transition: width 0.5s ease;
+}
+
+/* ── ESTADOS ─────────────────────────────────── */
+.hex-locked .hex-inner {
+  opacity: 0.3; filter: grayscale(1);
+}
+.hex-locked .hex-name,
+.hex-locked .hex-lv { opacity: 0.25; }
+
+.hex-done .hex-inner {
+  border-color: rgba(240,217,181,0.3);
+  opacity: 0.75;
+}
+.hex-done .hex-name { color: rgba(240,217,181,0.75); }
+.hex-done .hex-lv   { color: #7dca6b; }
+
+.hex-current .hex-inner {
+  border-color: #f0d9b5;
+  transform: scale(1.12);
+  box-shadow:
+    0 0 0 3px rgba(240,217,181,0.2),
+    0 8px 24px rgba(0,0,0,0.6),
+    0 0 20px rgba(240,160,48,0.3);
+}
+.hex-current .hex-name { color: #f0d9b5; font-size: 10px; font-weight: 700; }
+.hex-current .hex-desc { color: rgba(240,217,181,0.6); font-size: 9px; }
+.hex-current .hex-lv   { color: #f0a030; }
+
+/* ════════════════════════════════════════════════
+   SELECTOR DE FIGURA
+════════════════════════════════════════════════ */
+#modal-piece-select { z-index: 20; }
+.piece-select-box { gap: 16px; text-align: center; }
+.piece-select-title {
+  font-size: 16px; letter-spacing: 0.2em;
+  color: var(--cream); font-weight: 700; margin: 0;
+}
+.piece-select-sub {
+  font-size: 11px; color: rgba(240,217,181,0.5);
+  margin: 0; letter-spacing: 0.08em;
+}
+.piece-select-options {
+  display: flex; gap: 12px; justify-content: center;
+  margin: 8px 0;
+}
+.piece-option {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(240,217,181,0.15);
+  border-radius: 14px; padding: 18px 14px;
+  cursor: pointer; transition: all 0.2s; min-width: 82px;
+}
+.piece-option:hover, .piece-option:active {
+  border-color: #f0d9b5;
+  background: rgba(240,217,181,0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.piece-option-symbol {
+  font-size: 38px; line-height: 1; color: var(--cream);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+.piece-option-name {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.15em; color: var(--cream);
+}
+.piece-option-desc {
+  font-size: 9px; color: rgba(240,217,181,0.45); letter-spacing: 0.05em;
+}
+.piece-select-note {
+  font-size: 10px; color: rgba(240,217,181,0.3); margin: 0;
+}
+
+/* ════════════════════════════════════════════════
+   RACHA EN MODAL DE VICTORIA
+════════════════════════════════════════════════ */
+.modal-streak {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+  color: #f0a030; text-align: center; padding: 8px 16px;
+  background: rgba(240,160,48,0.1);
+  border-radius: 8px; border: 1px solid rgba(240,160,48,0.2);
 }

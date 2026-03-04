@@ -1,72 +1,69 @@
 /**
- * progression.js
- * ──────────────────────────────────────────────────────────────────
- * Sistema de progresión automática de dificultad.
- *
- * Cómo funciona:
- *  - El nivel empieza en 1 (profundidad Stockfish = 1) para todos.
- *  - Cada vez que el jugador GANA contra la IA, el nivel sube +1.
- *  - El nivel máximo es 12 (profundidad = 12).
- *  - El progreso se guarda en localStorage del navegador.
- *  - El jugador nunca ve el número de nivel — la dificultad
- *    sube sola de forma transparente.
- *
- * Mapeo nivel → profundidad Stockfish:
- *  Nivel  1 → depth  1  (principiante)
- *  Nivel  2 → depth  2
- *  ...
- *  Nivel 12 → depth 12  (máximo)
- * ──────────────────────────────────────────────────────────────────
+ * Progesion.js
+ * ─────────────────────────────────────────────
+ * Sistema de progresión:
+ *  - Nivel máximo: 20
+ *  - Para subir: 2 victorias CONSECUTIVAS
+ *  - Si pierdes: la racha vuelve a 0 (el nivel NO baja)
+ *  - getStreak()  → victorias consecutivas actuales (0 o 1)
+ *  - recordWin()  → registra victoria, devuelve { leveled, streak }
+ *  - recordLoss() → resetea racha
  */
 
-const STORAGE_KEY = 'chess_ai_level';  // clave en localStorage
-const MIN_LEVEL   = 1;
-const MAX_LEVEL   = 14;
+const KEY_LEVEL  = 'chess_ai_level';
+const KEY_STREAK = 'chess_win_streak';
+const MIN_LEVEL  = 1;
+const MAX_LEVEL  = 20;
+const WINS_NEEDED = 2;
 
-/**
- * Lee el nivel actual del jugador desde localStorage.
- * Si es la primera vez, devuelve 1.
- * @returns {number} nivel entre 1 y 12
- */
 export function getLevel() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === null) return MIN_LEVEL;
-  const parsed = parseInt(stored, 10);
-  // Sanitizar por si el valor guardado está fuera de rango
-  if (isNaN(parsed) || parsed < MIN_LEVEL) return MIN_LEVEL;
-  if (parsed > MAX_LEVEL)                  return MAX_LEVEL;
-  return parsed;
+  const v = parseInt(localStorage.getItem(KEY_LEVEL), 10);
+  if (isNaN(v) || v < MIN_LEVEL) return MIN_LEVEL;
+  if (v > MAX_LEVEL)             return MAX_LEVEL;
+  return v;
 }
 
-/**
- * Devuelve la profundidad de Stockfish para el nivel actual.
- * En este esquema nivel === profundidad, pero tenerlo separado
- * permite cambiar el mapeo en el futuro sin tocar app.js.
- * @returns {number} profundidad para getBestMove()
- */
 export function getCurrentDepth() {
   return getLevel();
 }
 
-/**
- * Sube el nivel en 1 si el jugador acaba de ganar contra la IA.
- * No hace nada si ya está en el nivel máximo.
- * Guarda el nuevo nivel en localStorage.
- * @returns {boolean} true si el nivel subió, false si ya era máximo
- */
-export function levelUp() {
-  const current = getLevel();
-  if (current >= MAX_LEVEL) return false;   // ya en el techo
-  const next = current + 1;
-  localStorage.setItem(STORAGE_KEY, String(next));
-  console.info(`[Progression] Nivel subido: ${current} → ${next} (depth ${next})`);
-  return true;
+export function getStreak() {
+  const v = parseInt(localStorage.getItem(KEY_STREAK), 10);
+  return isNaN(v) || v < 0 ? 0 : v;
 }
 
 /**
- * (Opcional / debug) Resetea el nivel a 1.
- * No se llama desde el juego normal.
+ * Registra una victoria.
+ * @returns {{ leveled: boolean, streak: number }}
+ *   leveled = true si en esta victoria se subió de nivel
+ *   streak  = racha actual DESPUÉS de esta victoria
  */
-export function resetLevel() {
-  localStorage.removeItem(STORAGE_KEY);
+export function recordWin() {
+  const newStreak = getStreak() + 1;
+
+  if (newStreak >= WINS_NEEDED) {
+    // Subir nivel y resetear racha
+    const current = getLevel();
+    const leveled = current < MAX_LEVEL;
+    if (leveled) localStorage.setItem(KEY_LEVEL, String(current + 1));
+    localStorage.setItem(KEY_STREAK, '0');
+    return { leveled, streak: newStreak };
+  } else {
+    // Guardar racha parcial
+    localStorage.setItem(KEY_STREAK, String(newStreak));
+    return { leveled: false, streak: newStreak };
+  }
+}
+
+/**
+ * Registra una derrota — resetea la racha, nivel intacto.
+ */
+export function recordLoss() {
+  localStorage.setItem(KEY_STREAK, '0');
+}
+
+/** Solo para debug/reset */
+export function resetProgress() {
+  localStorage.removeItem(KEY_LEVEL);
+  localStorage.removeItem(KEY_STREAK);
 }

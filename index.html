@@ -4,8 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CHESS</title>
-    <meta name="description" content="Juego de ajedrez con IA Stockfish y multijugador online. Desarrollado con JavaScript, HTML5 y Firebase." />
-    <meta name="keywords" content="ajedrez, chess, juego de ajedrez, stockfish, inteligencia artificial, multijugador online, firebase, javascript, html5" />
+    <meta name="description" content="Juego de ajedrez con IA Stockfish y multijugador online." />
     <meta name="author" content="Programador GBA" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,22 +13,24 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+
     <!-- PANTALLA INICIAL -->
     <div id="screen-menu">
       <div class="menu-card">
         <div class="title-wrapper">
-          <img id="app-icon" src="img/app_icon.webp" alt="Chess icon" class="title-icon" onerror="this.style.display = 'none'" />
+          <img id="app-icon" src="img/app_icon.webp" alt="Chess icon" class="title-icon" onerror="this.style.display='none'" />
           <div class="title-text">
             <h1 class="menu-title">CHESS</h1>
             <p class="menu-subtitle">ELIGE TU DESTINO</p>
           </div>
         </div>
         <button class="menu-btn btn-light" id="btn-vs-ai">STOCKFISH IA</button>
+        <button class="menu-btn btn-path" id="btn-path">&#9876; CAMINO DEL CABALLERO</button>
         <div class="separator"></div>
         <div class="multiplayer-section">
           <button class="menu-btn btn-dark" id="btn-create">CREAR PARTIDA</button>
           <div class="join-row">
-            <input id="join-input" class="menu-input" type="text" placeholder="CÓDIGO" maxlength="8" autocomplete="off" autocapitalize="characters" />
+            <input id="join-input" class="menu-input" type="text" placeholder="CODIGO" maxlength="8" autocomplete="off" autocapitalize="characters" />
             <button class="join-btn" id="btn-join">UNIRSE</button>
           </div>
         </div>
@@ -39,30 +40,23 @@
     <!-- PANTALLA DE JUEGO -->
     <div id="screen-game" class="hidden">
       <div class="game-top-bar">
-        <button class="back-btn" id="btn-back">← VOLVER</button>
-
-        <!-- Nivel del motor — solo visible en modo VS IA -->
+        <button class="back-btn" id="btn-back">&larr; VOLVER</button>
         <div id="level-display" class="level-display hidden">
           <span class="level-label">NIVEL</span>
           <span class="level-value" id="level-value">1</span>
         </div>
-
         <div id="game-code-display" class="game-code hidden">
           <span id="game-code-text"></span>
-          <button id="btn-share" title="Compartir código">⎘</button>
+          <button id="btn-share" title="Compartir codigo">&#x2398;</button>
         </div>
-
         <div id="thinking-indicator" class="thinking hidden">
           <span class="dot"></span><span class="dot"></span><span class="dot"></span>
         </div>
       </div>
-
       <div class="board-frame">
         <div id="board"></div>
       </div>
-
       <div id="turn-info" class="turn-info">Selecciona una pieza...</div>
-
       <div class="lore-card" id="lore-card">
         <div class="lore-empty" id="lore-empty">Selecciona una pieza...</div>
         <div class="lore-content hidden" id="lore-content">
@@ -80,13 +74,59 @@
       <div class="modal-box">
         <p class="modal-result-label" id="modal-result-label"></p>
         <div class="modal-avatar-wrapper">
-          <img id="modal-avatar" src="" alt="" class="modal-avatar" onerror="this.style.display = 'none'" />
+          <img id="modal-avatar" src="" alt="" class="modal-avatar" onerror="this.style.display='none'" />
         </div>
         <h2 class="modal-char-name" id="modal-char-name"></h2>
         <p class="modal-quote" id="modal-quote"></p>
+        <div id="modal-streak" class="modal-streak hidden"></div>
         <div class="modal-divider"></div>
         <p class="modal-side" id="modal-side"></p>
         <button class="menu-btn btn-light" id="btn-modal-continue">CONTINUAR</button>
+      </div>
+    </div>
+
+    <!-- CAMINO DEL CABALLERO -->
+    <div id="screen-path" class="hidden">
+      <div class="path-header">
+        <button class="back-btn" id="btn-path-back">&larr; VOLVER</button>
+        <h2 class="path-title">PROGRESO DEL CABALLERO</h2>
+        <div class="path-header-right">
+          <div class="path-header-level">
+            <span class="level-label">NIVEL</span>
+            <span class="level-value" id="path-level-value">1</span>
+          </div>
+          <button class="change-piece-btn" id="btn-change-piece" title="Cambiar figura">&#9812;</button>
+        </div>
+      </div>
+      <div id="path-streak-info" class="path-streak-info"></div>
+      <div class="path-scroll">
+        <div id="path-rows" class="path-rows"></div>
+      </div>
+    </div>
+
+    <!-- SELECTOR DE FIGURA -->
+    <div id="modal-piece-select" class="modal-overlay hidden">
+      <div class="modal-box piece-select-box">
+        <h2 class="piece-select-title">ELIGE TU FIGURA</h2>
+        <p class="piece-select-sub">Te acompanara en el Camino del Caballero</p>
+        <div class="piece-select-options">
+          <button class="piece-option" data-piece="king">
+            <span class="piece-option-symbol">&#9818;</span>
+            <span class="piece-option-name">REY</span>
+            <span class="piece-option-desc">Poder absoluto</span>
+          </button>
+          <button class="piece-option" data-piece="bishop">
+            <span class="piece-option-symbol">&#9821;</span>
+            <span class="piece-option-name">ALFIL</span>
+            <span class="piece-option-desc">Vision diagonal</span>
+          </button>
+          <button class="piece-option" data-piece="knight">
+            <span class="piece-option-symbol">&#9822;</span>
+            <span class="piece-option-name">CABALLO</span>
+            <span class="piece-option-desc">Movimiento unico</span>
+          </button>
+        </div>
+        <p class="piece-select-note">Puedes cambiarla desde el Camino del Caballero</p>
       </div>
     </div>
 
