@@ -649,7 +649,7 @@ function showPathScreen() {
   const rows   = 5;
   const total  = PATH_STOPS.length; // 20
   const padX   = 44;
-  const padY   = 32;
+  const padY   = 28;
   const stepX  = (W - padX * 2) / (cols - 1);
   const stepY  = (H - padY * 2) / (rows - 1);
 
