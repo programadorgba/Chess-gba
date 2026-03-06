@@ -849,158 +849,130 @@ body {
 }
 
 /* ════════════════════════════════════════════════
-   MAPA — PATRÓN SERPIENTE
+   MAPA SVG — CAMINO ASCENDENTE
 ════════════════════════════════════════════════ */
-.path-rows {
-  display: flex; flex-direction: column;
-  align-items: stretch; gap: 0;
+.path-scroll {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 12px 0 24px;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Cada fila de nodos */
-.path-row {
-  display: flex; flex-direction: row;
-  align-items: flex-start; justify-content: center;
-  padding: 4px 8px;
-  gap: 0;
-}
-
-/* Conector horizontal entre nodos */
-.path-conn {
-  flex: 1; height: 4px; max-width: 20px;
-  align-self: center; margin-bottom: 40px;
-  background: rgba(240,217,181,0.12);
-  border-radius: 2px; flex-shrink: 0;
-}
-.path-conn.conn-done {
-  background: linear-gradient(90deg, rgba(240,217,181,0.5), rgba(240,160,48,0.5));
-}
-
-/* Curva de giro entre filas */
-.path-turn {
-  height: 28px;
-  border: 3px solid rgba(240,217,181,0.12);
-  border-top: none;
-  border-radius: 0 0 20px 20px;
-  margin: -2px 48px 0;
-}
-.path-turn.turn-right { margin-left: 48px; margin-right: auto; }
-.path-turn.turn-left  { margin-left: auto; margin-right: 48px; }
-.path-turn.conn-done  { border-color: rgba(240,217,181,0.4); }
-
-/* ════════════════════════════════════════════════
-   NODO
-════════════════════════════════════════════════ */
-.path-hex {
-  display: flex; flex-direction: column;
-  align-items: center; gap: 6px;
-  flex-shrink: 0; width: 76px;
-}
-
-.hex-inner {
-  position: relative;
-  width: 68px; height: 68px;
-  border-radius: 16px;
-  background-color: rgba(255,255,255,0.05);
-  background-size: cover; background-position: center;
-  border: 2px solid rgba(240,217,181,0.1);
+#path-rows {
+  width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
 }
 
-/* Capa oscura sobre la imagen para legibilidad */
-.hex-overlay {
-  position: absolute; inset: 0;
-  background: rgba(0,0,0,0.35);
-  border-radius: 14px;
+/* Nodo del mapa */
+.map-node {
+  position: absolute;
+  width: 56px; height: 56px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(40,25,10,0.85);
+  border: 2px solid rgba(240,217,181,0.18);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  z-index: 2;
 }
+.map-node:active { transform: translate(-50%,-50%) scale(0.92); }
 
-.hex-bg-icon {
-  position: relative; z-index: 1;
+.map-icon {
   font-size: 28px; line-height: 1;
-  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9));
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.9));
+  pointer-events: none;
 }
 
-/* Figura del jugador — animada sobre el nodo actual */
-.hex-player {
-  position: absolute; bottom: 3px; right: 4px;
-  font-size: 22px; z-index: 3;
+.map-lv {
+  position: absolute; bottom: -16px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px; font-weight: 700;
+  color: rgba(240,217,181,0.35);
+  letter-spacing: 0.05em; white-space: nowrap;
+  pointer-events: none;
+}
+
+.map-check {
+  position: absolute; top: 1px; right: 3px;
+  font-size: 11px; color: #7dca6b; font-weight: 900;
+  pointer-events: none;
+}
+
+/* Figura animada sobre nodo actual */
+.map-player {
+  position: absolute; bottom: -5px; right: -8px;
+  font-size: 24px; z-index: 4;
   filter: drop-shadow(0 1px 4px rgba(0,0,0,1));
   animation: floatPiece 1.4s ease-in-out infinite;
-}
-@keyframes floatPiece {
-  0%,100% { transform: translateY(0) scale(1); }
-  50%      { transform: translateY(-5px) scale(1.05); }
+  pointer-events: none;
 }
 
-.hex-check {
-  position: absolute; top: 4px; right: 6px;
-  font-size: 14px; color: #7dca6b; font-weight: 900;
-  z-index: 3; text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+/* Barra de racha bajo el nodo actual */
+.map-streak {
+  position: absolute; bottom: -22px; left: 50%;
+  transform: translateX(-50%);
+  width: 36px; height: 4px; border-radius: 2px;
+  background: rgba(255,255,255,0.1); overflow: hidden;
+  pointer-events: none;
 }
-.hex-lock {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px; z-index: 3;
-  background: rgba(0,0,0,0.45);
-  border-radius: 14px;
-}
-
-/* Etiqueta bajo el nodo */
-.hex-label {
-  display: flex; flex-direction: column;
-  align-items: center; gap: 2px;
-  text-align: center; width: 76px;
-}
-.hex-name {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
-  color: rgba(240,217,181,0.6); line-height: 1.2;
-}
-.hex-desc {
-  font-size: 8px; color: rgba(240,217,181,0.38);
-  font-style: italic; line-height: 1.2;
-}
-.hex-lv {
-  font-size: 8px; color: rgba(240,217,181,0.28); font-weight: 700;
-}
-
-/* Barra de progreso de racha (1/2 victorias) */
-.hex-streak {
-  width: 60px; height: 5px; border-radius: 3px;
-  background: rgba(255,255,255,0.08);
-  overflow: hidden; margin-top: -2px;
-}
-.hex-streak-fill {
-  height: 100%; border-radius: 3px;
-  background: linear-gradient(90deg, #f0a030, #f0d9b5);
+.map-streak div {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg,#f0a030,#f0d9b5);
   transition: width 0.5s ease;
 }
 
-/* ── ESTADOS ─────────────────────────────────── */
-.hex-locked .hex-inner {
-  opacity: 0.3; filter: grayscale(1);
+/* Estados */
+.node-locked {
+  opacity: 0.28;
+  filter: grayscale(1);
 }
-.hex-locked .hex-name,
-.hex-locked .hex-lv { opacity: 0.25; }
+.node-locked .map-icon { filter: none; }
 
-.hex-done .hex-inner {
+.node-done {
   border-color: rgba(240,217,181,0.3);
-  opacity: 0.75;
+  background: rgba(30,20,5,0.7);
 }
-.hex-done .hex-name { color: rgba(240,217,181,0.75); }
-.hex-done .hex-lv   { color: #7dca6b; }
+.node-done .map-lv { color: #7dca6b; }
 
-.hex-current .hex-inner {
+.node-current {
   border-color: #f0d9b5;
-  transform: scale(1.12);
+  border-width: 3px;
+  background: rgba(60,35,5,0.9);
   box-shadow:
-    0 0 0 3px rgba(240,217,181,0.2),
-    0 8px 24px rgba(0,0,0,0.6),
-    0 0 20px rgba(240,160,48,0.3);
+    0 0 0 5px rgba(240,217,181,0.18),
+    0 0 28px rgba(240,160,48,0.6),
+    0 6px 20px rgba(0,0,0,0.8);
+  z-index: 5;
+  transform: translate(-50%,-50%) scale(1.15);
 }
-.hex-current .hex-name { color: #f0d9b5; font-size: 10px; font-weight: 700; }
-.hex-current .hex-desc { color: rgba(240,217,181,0.6); font-size: 9px; }
-.hex-current .hex-lv   { color: #f0a030; }
+.node-current .map-lv { color: #f0a030; font-size: 10px; }
+
+/* Tooltip al pulsar un nodo */
+.path-tooltip {
+  position: absolute; z-index: 10;
+  background: rgba(20,12,4,0.96);
+  border: 1px solid rgba(240,217,181,0.3);
+  border-radius: 10px;
+  padding: 8px 12px;
+  width: 130px;
+  display: flex; flex-direction: column; gap: 3px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+  pointer-events: none;
+}
+.path-tooltip.hidden { display: none !important; }
+.path-tooltip strong {
+  font-size: 11px; font-weight: 700;
+  color: #f0d9b5; letter-spacing: 0.08em;
+}
+.path-tooltip span {
+  font-size: 10px; color: rgba(240,217,181,0.55);
+  font-style: italic; line-height: 1.3;
+}
+.path-tooltip em {
+  font-size: 9px; color: rgba(240,217,181,0.3);
+  font-style: normal; font-weight: 700;
+}
 
 /* ════════════════════════════════════════════════
    SELECTOR DE FIGURA
