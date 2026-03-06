@@ -69,7 +69,7 @@ html, body {
   color: var(--cream);
   overflow: hidden;          /* sin scroll */
   position: fixed;           /* fija en móvil — evita el rebote iOS */
-  top: 0;
+  top: 20px;
   left: 0;
 }
 
@@ -467,15 +467,12 @@ body {
 
 /* Fallback unicode / modo icono */
 .piece-unicode {
-  font-size: calc(var(--sq-size) * 0.68);
+  font-size: clamp(24px, 5.5vw, 36px);
   line-height: 1;
-  pointer-events: none;
+  display: block;
+  text-align: center;
+  -webkit-font-smoothing: antialiased;
   user-select: none;
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* ════════════════════════════════════════════════
