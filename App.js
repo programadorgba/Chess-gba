@@ -640,7 +640,7 @@ function showPathScreen() {
 
   // ── Dimensiones del mapa ──────────────────────
   const W = 320;   // ancho del SVG (viewport)
-  const H = 780;   // alto del SVG — suficiente para 20 nodos sin corte
+  const H = 620;   // alto del SVG — suficiente para 20 nodos sin corte
 
   // ── Puntos de control del camino sinuoso (abajo→arriba) ──
   // 5 columnas alternadas, 4 filas = 20 nodos
@@ -649,7 +649,7 @@ function showPathScreen() {
   const rows   = 5;
   const total  = PATH_STOPS.length; // 20
   const padX   = 44;
-  const padY   = 48;
+  const padY   = 32;
   const stepX  = (W - padX * 2) / (cols - 1);
   const stepY  = (H - padY * 2) / (rows - 1);
 
