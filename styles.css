@@ -69,7 +69,7 @@ html, body {
   color: var(--cream);
   overflow: hidden;          /* sin scroll */
   position: fixed;           /* fija en móvil — evita el rebote iOS */
-  top: 20px;
+  top: 30px;
   left: 0;
 }
 
