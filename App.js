@@ -262,7 +262,7 @@ function applyMove(move, send = false) {
 
   renderBoard();
   updateTurnInfo(chess, isAiEnabled);
-  checkEndGame(chess, identities, lastMove, isAiEnabled);
+  setTimeout(() => checkEndGame(chess, identities, lastMove, isAiEnabled), 1500);
 }
 
 // ════════════════════════════════════════════════════════════════
