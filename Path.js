@@ -66,6 +66,17 @@ export function initPath() {
     document.getElementById('modal-piece-select').classList.remove('hidden');
   });
 
+  // Reiniciar progreso
+  const resetBtn = document.getElementById('btn-reset-progress');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (confirm('¿Seguro que quieres reiniciar tu progreso? Volverás al nivel 1.')) {
+        resetProgress();
+        showPathScreen();
+      }
+    });
+  }
+
   // Selector de figura
   document.querySelectorAll('.piece-option').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -87,23 +98,17 @@ function showPathScreen() {
 
   document.getElementById('path-level-value').textContent = currentLevel;
 
-  const streakInfoEl = document.getElementById('path-streak-info');
-  if (streakInfoEl) {
-    streakInfoEl.textContent = streak > 0
-      ? '🔥 ' + streak + '/2 victorias — ¡una mas para subir!'
-      : 'Gana 2 seguidas para avanzar';
-  }
 
   const container = document.getElementById('path-rows');
   container.innerHTML = '';
 
   const W     = 320;
-  const H     = 600;
+  const H     = 620;
   const cols  = 4;
   const rows  = 5;
   const total = PATH_STOPS.length;
   const padX  = 44;
-  const padY  = 30;
+  const padY  = 32;
   const stepX = (W - padX * 2) / (cols - 1);
   const stepY = (H - padY * 2) / (rows - 1);
 
@@ -228,10 +233,4 @@ function showPathScreen() {
 
   document.getElementById('screen-menu').classList.add('hidden');
   document.getElementById('screen-path').classList.remove('hidden');
-  document.getElementById('btn-reset-progress').addEventListener('click', () => {
-  if (confirm('¿Seguro que quieres reiniciar tu progreso? Volverás al nivel 1.')) {
-    resetProgress();
-    showPathScreen();
-  }
-});
 }

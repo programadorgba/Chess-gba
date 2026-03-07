@@ -1,10 +1,10 @@
 /**
  * UI.js
  * Modal de victoria, lore card e info de turno.
- * Importado por App.js — no tiene estado propio.
  */
 import { PIECE_LORE, pieceImagePath } from './Lore.js';
 import { recordWin, recordLoss, getLevel } from './Progesion.js';
+import { recordGame } from './Stats.js';
 
 // ════════════════════════════════════════════════════════════════
 //  INFO DE TURNO
@@ -80,18 +80,20 @@ const DRAW_QUOTES = [
 export function checkEndGame(chess, identities, lastMove, isAiEnabled) {
   if (!chess.game_over()) return;
 
-  const modalEl    = document.getElementById('modal-overlay');
+  const modalEl     = document.getElementById('modal-overlay');
   const modalAvatar = document.getElementById('modal-avatar');
-  const labelEl    = document.getElementById('modal-result-label');
-  const charNameEl = document.getElementById('modal-char-name');
-  const quoteEl    = document.getElementById('modal-quote');
-  const sideEl     = document.getElementById('modal-side');
-  const streakEl   = document.getElementById('modal-streak');
-  const wrapEl     = modalAvatar.parentElement;
+  const labelEl     = document.getElementById('modal-result-label');
+  const charNameEl  = document.getElementById('modal-char-name');
+  const quoteEl     = document.getElementById('modal-quote');
+  const sideEl      = document.getElementById('modal-side');
+  const streakEl    = document.getElementById('modal-streak');
+  const wrapEl      = modalAvatar.parentElement;
 
   const lastId    = lastMove ? identities[lastMove.to] : null;
   const lore      = lastId ? PIECE_LORE[lastId] : null;
   const pieceType = lastId ? lastId.split('_')[1] : null;
+  const moveCount = chess.history().length;
+  const level     = getLevel();
 
   if (lastId) {
     modalAvatar.src           = `img/${lastId}.png`;
@@ -107,6 +109,14 @@ export function checkEndGame(chess, identities, lastMove, isAiEnabled) {
     const win = chess.turn() === 'b' ? 'w' : 'b';
 
     if (isAiEnabled) {
+      // ── Registrar partida en historial ──────────────────────
+      recordGame({
+        result: win === 'w' ? 'w' : 'l',
+        level,
+        moves: moveCount,
+        mode:  'ai',
+      });
+
       if (win === 'w') {
         const { streak } = recordWin();
         document.getElementById('level-value').textContent = getLevel();
@@ -125,6 +135,8 @@ export function checkEndGame(chess, identities, lastMove, isAiEnabled) {
         streakEl.classList.remove('hidden');
       }
     } else {
+      // ── Partida PvP ─────────────────────────────────────────
+      recordGame({ result: 'w', level: 0, moves: moveCount, mode: 'pvp' });
       streakEl.classList.add('hidden');
     }
 
@@ -136,6 +148,10 @@ export function checkEndGame(chess, identities, lastMove, isAiEnabled) {
     sideEl.textContent     = win === 'w' ? 'Ganan blancas' : (isAiEnabled ? 'IA' : 'Ganan negras');
 
   } else if (chess.in_draw()) {
+    // ── Tablas ───────────────────────────────────────────────
+    if (isAiEnabled) {
+      recordGame({ result: 'd', level, moves: moveCount, mode: 'ai' });
+    }
     streakEl.classList.add('hidden');
     labelEl.textContent    = 'TABLAS';
     labelEl.className      = 'modal-result-label draw';

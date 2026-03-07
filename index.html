@@ -6,31 +6,37 @@
     <title>CHESS</title>
     <meta name="description" content="Juego de ajedrez con IA Stockfish y multijugador online." />
     <meta name="author" content="Programador GBA" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="icon" href="img/logo-pequeñol.webp" type="image/webp" />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
 
-    <!-- PANTALLA INICIAL -->
+    <!-- MENÚ PRINCIPAL -->
     <div id="screen-menu">
       <div class="menu-card">
         <div class="title-wrapper">
-          <img id="app-icon" src="img/app_icon.webp" alt="Chess icon" class="title-icon" onerror="this.style.display='none'" />
+          <img id="app-icon" src="img/app_icon.webp" alt="Chess icon"
+               class="title-icon" onerror="this.style.display='none'" />
           <div class="title-text">
             <h1 class="menu-title">CHESS</h1>
             <p class="menu-subtitle">ELIGE TU DESTINO</p>
           </div>
         </div>
-        <button class="menu-btn btn-light" id="btn-vs-ai">STOCKFISH IA</button>
-        <button class="menu-btn btn-path" id="btn-path">&#9876; CAMINO DEL CABALLERO</button>
+
+        <button class="menu-btn btn-light"    id="btn-vs-ai">STOCKFISH IA</button>
+        <button class="menu-btn btn-path"     id="btn-path">&#9876; CAMINO DEL CABALLERO</button>
+        <button class="menu-btn btn-openings" id="btn-openings">&#9822; PRACTICA APERTURAS</button>
+        <button class="menu-btn btn-stats"    id="btn-stats">&#128202; ESTADÍSTICAS</button>
+        <button class="menu-btn btn-puzzles"  id="btn-puzzles">&#9876; RETOS DE FINALES</button>
+
         <div class="separator"></div>
+
         <div class="multiplayer-section">
           <button class="menu-btn btn-dark" id="btn-create">CREAR PARTIDA</button>
           <div class="join-row">
-            <input id="join-input" class="menu-input" type="text" placeholder="CODIGO" maxlength="8" autocomplete="off" autocapitalize="characters" />
+            <input id="join-input" class="menu-input" type="text"
+                   placeholder="CODIGO" maxlength="8"
+                   autocomplete="off" autocapitalize="characters" />
             <button class="join-btn" id="btn-join">UNIRSE</button>
           </div>
         </div>
@@ -74,7 +80,8 @@
       <div class="modal-box">
         <p class="modal-result-label" id="modal-result-label"></p>
         <div class="modal-avatar-wrapper">
-          <img id="modal-avatar" src="" alt="" class="modal-avatar" onerror="this.style.display='none'" />
+          <img id="modal-avatar" src="" alt="" class="modal-avatar"
+               onerror="this.style.display='none'" />
         </div>
         <h2 class="modal-char-name" id="modal-char-name"></h2>
         <p class="modal-quote" id="modal-quote"></p>
@@ -90,17 +97,17 @@
       <div class="path-header">
         <button class="back-btn" id="btn-path-back">&larr; VOLVER</button>
         <h2 class="path-title">PROGRESO DEL CABALLERO</h2>
-        <button id="btn-reset-progress" class="change-piece-btn btn-reset" title="Reiniciar progreso">⚠</button>
         <div class="path-header-right">
           <div class="path-header-level">
             <span class="level-label">NIVEL</span>
             <span class="level-value" id="path-level-value">1</span>
           </div>
           <button class="change-piece-btn" id="btn-change-piece" title="Cambiar figura">&#9812;</button>
+          <button class="change-piece-btn btn-reset" id="btn-reset-progress" title="Reiniciar progreso">&#9888;&#65038;</button>
         </div>
-      </div>   
+      </div>
       <div class="path-scroll">
-        <div id="path-rows" class="path-rows"></div>
+        <div id="path-rows"></div>
       </div>
     </div>
 
@@ -130,7 +137,172 @@
       </div>
     </div>
 
+    <!-- PRACTICA DE APERTURAS -->
+    <div id="screen-openings" class="hidden">
+
+      <!-- Lista -->
+      <div id="screen-openings-list">
+        <div class="path-header">
+          <button class="back-btn" id="btn-openings-back">&larr; VOLVER</button>
+          <h2 class="path-title">PRACTICA DE APERTURAS</h2>
+        </div>
+        <div class="openings-list-scroll">
+          <div id="openings-list" class="openings-list"></div>
+        </div>
+      </div>
+
+      <!-- Tablero de práctica -->
+      <div id="screen-openings-board" class="hidden">
+        <div class="path-header">
+          <button class="back-btn" id="btn-practice-back">&larr; VOLVER</button>
+          <h2 class="path-title" id="practice-opening-title"></h2>
+          <button class="back-btn" id="btn-practice-retry">&#8635;</button>
+        </div>
+        <div class="practice-game">
+          <div class="board-frame">
+            <div id="practice-board"></div>
+          </div>
+          <div id="practice-hint" class="practice-hint hint-info"></div>
+          <div id="practice-progress" class="practice-progress"></div>
+          <button id="practice-next-btn" class="menu-btn btn-light hidden">SIGUIENTE APERTURA</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ESTADÍSTICAS -->
+    <div id="screen-stats" class="hidden">
+      <div class="path-header">
+        <button class="back-btn" id="btn-stats-back">&larr; VOLVER</button>
+        <h2 class="path-title">ESTADÍSTICAS</h2>
+      </div>
+
+      <div class="stats-scroll">
+
+        <!-- Anillo de victorias -->
+        <div class="stats-ring-section">
+          <svg class="stats-ring-svg" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="statsGold" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%"   stop-color="#c8860a" />
+                <stop offset="100%" stop-color="#f0d9b5" />
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg"  cx="60" cy="60" r="54" />
+            <circle class="ring-arc" cx="60" cy="60" r="54" id="stats-arc" />
+          </svg>
+          <div class="stats-ring-label">
+            <span class="stats-pct-num" id="stats-winpct">0</span>
+            <span class="stats-pct-sym">%</span>
+          </div>
+          <p class="stats-ring-caption">victorias</p>
+        </div>
+
+        <!-- Tarjetas numéricas -->
+        <div class="stats-cards">
+          <div class="stats-card">
+            <span class="stats-card-icon">&#127918;</span>
+            <span class="stats-card-num" id="stats-total">0</span>
+            <span class="stats-card-label">PARTIDAS</span>
+          </div>
+          <div class="stats-card stats-card-win">
+            <span class="stats-card-icon">&#127942;</span>
+            <span class="stats-card-num" id="stats-wins">0</span>
+            <span class="stats-card-label">VICTORIAS</span>
+          </div>
+          <div class="stats-card stats-card-loss">
+            <span class="stats-card-icon">&#128128;</span>
+            <span class="stats-card-num" id="stats-losses">0</span>
+            <span class="stats-card-label">DERROTAS</span>
+          </div>
+          <div class="stats-card stats-card-streak">
+            <span class="stats-card-icon">&#128293;</span>
+            <span class="stats-card-num" id="stats-streak">0</span>
+            <span class="stats-card-label">RACHA MAX</span>
+          </div>
+        </div>
+
+        <!-- Nivel actual y máximo -->
+        <div class="stats-levels">
+          <div class="stats-level-item">
+            <span class="stats-level-num" id="stats-level">1</span>
+            <span class="stats-level-label">NIVEL ACTUAL</span>
+          </div>
+          <div class="stats-level-divider"></div>
+          <div class="stats-level-item">
+            <span class="stats-level-num gold" id="stats-maxlevel">1</span>
+            <span class="stats-level-label">NIVEL MAXIMO</span>
+          </div>
+        </div>
+
+        <!-- Últimas partidas -->
+        <div class="stats-section">
+          <p class="stats-section-title">ULTIMAS PARTIDAS</p>
+          <div id="stats-history" class="stats-history"></div>
+          <div class="stats-history-legend">
+            <span class="legend-dot dot-win"></span><span>Victoria</span>
+            <span class="legend-dot dot-loss"></span><span>Derrota</span>
+            <span class="legend-dot dot-draw"></span><span>Tablas</span>
+          </div>
+        </div>
+
+        <!-- Rendimiento por nivel -->
+        <div class="stats-section">
+          <p class="stats-section-title">% VICTORIAS POR NIVEL</p>
+          <div id="stats-by-level" class="stats-by-level"></div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- RETOS DE FINALES -->
+    <div id="screen-puzzles" class="hidden">
+
+      <!-- Lista -->
+      <div id="screen-puzzles-list">
+        <div class="path-header">
+          <button class="back-btn" id="btn-puzzles-back">&larr; VOLVER</button>
+          <h2 class="path-title">RETOS DE FINALES</h2>
+        </div>
+        <div class="openings-list-scroll">
+          <div id="puzzles-list" class="openings-list"></div>
+        </div>
+      </div>
+
+      <!-- Tablero del reto -->
+      <div id="screen-puzzles-board" class="hidden">
+        <div class="path-header">
+          <button class="back-btn" id="btn-puzzle-back">&larr; VOLVER</button>
+          <h2 class="path-title" id="puzzle-title"></h2>
+          <button class="back-btn" id="btn-puzzle-retry">&#8635;</button>
+        </div>
+        <div class="practice-game">
+          <div class="board-frame">
+            <div id="puzzle-board"></div>
+          </div>
+          <div id="puzzle-goal" class="puzzle-goal"></div>
+          <div id="puzzle-hint" class="practice-hint hint-info"></div>
+          <div class="puzzle-actions">
+            <button id="puzzle-hint-btn"     class="puzzle-btn btn-hint">&#128161; PISTA</button>
+            <button id="puzzle-solution-btn" class="puzzle-btn btn-solution">&#128065; SOLUCIÓN</button>
+          </div>
+          <button id="puzzle-retry-btn" class="menu-btn btn-light hidden">INTENTAR DE NUEVO</button>
+          <button id="puzzle-next-btn"  class="menu-btn btn-light hidden">SIGUIENTE RETO</button>
+        </div>
+      </div>
+
+    </div>
+
     <script src="peerjs.min.js"></script>
+    <script type="module">
+      import { initOpenings } from './Openings.js';
+      import { initStats }    from './StatsScreen.js';
+      import { initPuzzles }  from './Puzzles.js';
+      initOpenings();
+      initStats();
+      initPuzzles();
+    </script>
     <script type="module" src="App.js"></script>
   </body>
 </html>
