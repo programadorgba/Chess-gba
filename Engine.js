@@ -1,12 +1,11 @@
 /**
- * engine.js
+ * Engine.js
  * ──────────────────────────────────────────────────────────────────
- * Wrapper para Stockfish local como Web Worker.
+ * Wrapper para Stockfish como Web Worker.
  *
- * REQUISITO: descarga stockfish.js y ponlo en la raíz del proyecto
- * (misma carpeta que index.html):
- *   https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js
- *   → guárdalo como: stockfish.js
+ * REQUISITO: descarga stockfish.js (versión WASM para navegador):
+ *   https://cdn.jsdelivr.net/npm/stockfish@16/src/stockfish-nnue-16-single.js
+ *   → guárdalo como: stockfish.js  (reemplaza el que tienes)
  *
  * El juego funciona 100% offline una vez descargado.
  * ──────────────────────────────────────────────────────────────────
@@ -17,7 +16,7 @@ let isReady   = false;
 let pendingCb = null;
 
 /**
- * Inicializa Stockfish desde el archivo local.
+ * Inicializa Stockfish y configura UCI.
  * Devuelve una Promise que resuelve cuando el motor está listo.
  */
 export function initEngine() {
@@ -28,8 +27,7 @@ export function initEngine() {
 
     worker.onerror = (e) => {
       console.error('[Engine] Error cargando stockfish.js:', e.message);
-      console.error('Asegúrate de que stockfish.js está en la raíz del proyecto.');
-      resolve(); // resuelve igual → fallback a movimiento aleatorio
+      resolve(); // fallback a movimiento aleatorio
     };
 
     worker.onmessage = (e) => {
@@ -50,6 +48,11 @@ export function initEngine() {
           const cb  = pendingCb;
           pendingCb = null;
           cb(move);
+        } else if (pendingCb) {
+          // motor devolvió (none) — posición terminal
+          const cb  = pendingCb;
+          pendingCb = null;
+          cb(null);
         }
       }
     };
@@ -59,18 +62,33 @@ export function initEngine() {
 }
 
 /**
- * Pide al motor el mejor movimiento para una posición FEN.
+ * Pide al motor el mejor movimiento aplicando Skill Level.
+ *
  * @param {string}   fen
- * @param {number}   depth     — profundidad de búsqueda (1–14)
- * @param {Function} callback  — cb(ucimove: string | null)
+ * @param {number}   depth      — profundidad (1-20)
+ * @param {number}   skillLevel — Skill Level UCI (0-20)
+ *                                0 = errores graves, 20 = grandmaster
+ * @param {Function} callback   — cb(ucimove: string | null)
  */
-export function getBestMove(fen, depth, callback) {
+export function getBestMove(fen, depth, skillLevel, callback) {
   if (!worker || !isReady) {
-    // Motor no disponible → movimiento aleatorio (fallback)
     callback(null);
     return;
   }
+
   pendingCb = callback;
+
+  // Activar limitación de fuerza y aplicar nivel
+  // UCI_LimitStrength + Skill Level = Stockfish comete errores reales
+  worker.postMessage('setoption name UCI_LimitStrength value true');
+  worker.postMessage(`setoption name Skill Level value ${skillLevel}`);
+
+  // Nuevo juego para limpiar estado interno
+  worker.postMessage('ucinewgame');
+  worker.postMessage('isready'); // esperar antes de buscar
+
+  // Pequeño timeout para dar tiempo al isready interno
+  // (el onmessage ya filtra readyok, así que mandamos directamente)
   worker.postMessage(`position fen ${fen}`);
   worker.postMessage(`go depth ${depth}`);
 }
