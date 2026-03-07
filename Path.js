@@ -3,7 +3,7 @@
  * Camino del Caballero — mapa SVG + selector de figura.
  * Se inicializa llamando a initPath() desde App.js.
  */
-import { getLevel, getStreak } from './Progesion.js';
+import { getLevel, getStreak, resetProgress } from './Progesion.js';
 
 // ════════════════════════════════════════════════════════════════
 //  FIGURA DEL JUGADOR
@@ -98,12 +98,12 @@ function showPathScreen() {
   container.innerHTML = '';
 
   const W     = 320;
-  const H     = 620;
+  const H     = 600;
   const cols  = 4;
   const rows  = 5;
   const total = PATH_STOPS.length;
   const padX  = 44;
-  const padY  = 32;
+  const padY  = 30;
   const stepX = (W - padX * 2) / (cols - 1);
   const stepY = (H - padY * 2) / (rows - 1);
 
@@ -228,4 +228,10 @@ function showPathScreen() {
 
   document.getElementById('screen-menu').classList.add('hidden');
   document.getElementById('screen-path').classList.remove('hidden');
+  document.getElementById('btn-reset-progress').addEventListener('click', () => {
+  if (confirm('¿Seguro que quieres reiniciar tu progreso? Volverás al nivel 1.')) {
+    resetProgress();
+    showPathScreen();
+  }
+});
 }
