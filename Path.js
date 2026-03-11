@@ -11,7 +11,10 @@ import { getLevel, getStreak, resetProgress } from './Progesion.js';
 const PIECE_KEY     = 'chess_player_piece';
 const PIECE_SYMBOLS = { king: '♔', bishop: '♗', knight: '♘' };
 
-function getPlayerPiece() { return localStorage.getItem(PIECE_KEY) || null; }
+function getPlayerPiece() {
+  const p = localStorage.getItem(PIECE_KEY);
+  return (p && PIECE_SYMBOLS[p]) ? p : null;
+}
 function savePlayerPiece(p) { localStorage.setItem(PIECE_KEY, p); }
 
 // ════════════════════════════════════════════════════════════════
@@ -78,7 +81,7 @@ export function initPath() {
   }
 
   // Selector de figura
-  document.querySelectorAll('.piece-option').forEach(btn => {
+  document.querySelectorAll('#modal-piece-select .piece-option').forEach(btn => {
     btn.addEventListener('click', () => {
       savePlayerPiece(btn.dataset.piece);
       document.getElementById('modal-piece-select').classList.add('hidden');

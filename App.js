@@ -48,7 +48,7 @@ initPath();
 // ════════════════════════════════════════════════════════════════
 //  BOTONES
 // ════════════════════════════════════════════════════════════════
-document.getElementById('btn-vs-ai').addEventListener('click',          startAiGame);
+document.getElementById('btn-vs-ai').addEventListener('click',          showColorSelect);
 document.getElementById('btn-create').addEventListener('click',         createGame);
 document.getElementById('btn-join').addEventListener('click',           joinGame);
 document.getElementById('btn-back').addEventListener('click',           goMenu);
@@ -75,6 +75,7 @@ function goMenu() {
   screenGame.classList.add('hidden');
   screenMenu.classList.remove('hidden');
   document.getElementById('join-input').value = '';
+  document.getElementById('modal-color-select').classList.add('hidden');
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -96,14 +97,31 @@ function resetState() {
 }
 
 // ════════════════════════════════════════════════════════════════
+//  SELECCIÓN DE COLOR
+// ════════════════════════════════════════════════════════════════
+function showColorSelect() {
+  document.getElementById('modal-color-select').classList.remove('hidden');
+}
+
+document.getElementById('btn-color-white').addEventListener('click', () => {
+  document.getElementById('modal-color-select').classList.add('hidden');
+  startAiGame('w');
+});
+
+document.getElementById('btn-color-black').addEventListener('click', () => {
+  document.getElementById('modal-color-select').classList.add('hidden');
+  startAiGame('b');
+});
+
+// ════════════════════════════════════════════════════════════════
 //  VS IA
 // ════════════════════════════════════════════════════════════════
-function startAiGame() {
+function startAiGame(color = 'w') {
   resetState();
   if (!chess) return;
   isAiEnabled = true;
   gameId      = null;
-  myColor     = 'w';
+  myColor     = color;
   codeBox.classList.add('hidden');
 
   document.getElementById('level-display').classList.remove('hidden');
@@ -112,7 +130,9 @@ function startAiGame() {
   showGame();
   renderBoard();
   updateTurnInfo(chess, isAiEnabled);
-  initEngine().catch(() => {});
+  initEngine().catch(() => {}).then(() => {
+    if (myColor === 'b') doAiMove();
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -200,7 +220,7 @@ function onSquareClick(sq) {
 
   if (id) showLore(id);
   if (chess.game_over()) return;
-  if (isAiEnabled && chess.turn() === 'b') return;
+  if (isAiEnabled && chess.turn() !== myColor) return;
   if (!isAiEnabled && myColor && chess.turn() !== myColor) return;
 
   if (!selectedSq) {
@@ -229,7 +249,7 @@ function onSquareClick(sq) {
   }
 
   applyMove(move, true);
-  if (isAiEnabled && !chess.game_over() && chess.turn() === 'b') doAiMove();
+  if (isAiEnabled && !chess.game_over() && chess.turn() !== myColor) doAiMove();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -262,7 +282,7 @@ function applyMove(move, send = false) {
 
   renderBoard();
   updateTurnInfo(chess, isAiEnabled);
-  setTimeout(() => checkEndGame(chess, identities, lastMove, isAiEnabled), 1500);
+  checkEndGame(chess, identities, lastMove, isAiEnabled);
 }
 
 // ════════════════════════════════════════════════════════════════

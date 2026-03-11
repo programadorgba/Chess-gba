@@ -1,26 +1,4 @@
-/* ════════════════════════════════════════════════
-   FUENTE LOCAL — Montserrat
-════════════════════════════════════════════════ */
-@font-face {
-  font-family: 'Montserrat';
-  src: url('assets/fonts/Montserrat-Regular.ttf') format('truetype');
-  font-weight: 400; font-style: normal;
-}
-@font-face {
-  font-family: 'Montserrat';
-  src: url('assets/fonts/Montserrat-SemiBold.ttf') format('truetype');
-  font-weight: 600; font-style: normal;
-}
-@font-face {
-  font-family: 'Montserrat';
-  src: url('assets/fonts/Montserrat-Bold.ttf') format('truetype');
-  font-weight: 700; font-style: normal;
-}
-@font-face {
-  font-family: 'Montserrat';
-  src: url('assets/fonts/Montserrat-Black.ttf') format('truetype');
-  font-weight: 900; font-style: normal;
-}
+
 
 /* ════════════════════════════════════════════════
    VARIABLES GLOBALES
@@ -38,7 +16,7 @@
   --legal-dot:   rgba(0, 0, 0, 0.22);
   --last-move:   rgba(155, 199, 0, 0.38);
   --check-sq:    rgba(220, 50, 50, 0.55);
-  --font: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+  --font: 'Segoe UI', Arial, sans-serif;
   --board-size: min(480px, 96vw);
   --sq-size: calc(var(--board-size) / 8);
 }
