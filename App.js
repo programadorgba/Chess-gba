@@ -129,7 +129,7 @@ function startAiGame(color = 'w') {
 
   showGame();
   renderBoard();
-  updateTurnInfo(chess, isAiEnabled);
+  updateTurnInfo(chess, isAiEnabled, myColor);
   initEngine().catch(() => {}).then(() => {
     if (myColor === 'b') doAiMove();
   });
@@ -281,8 +281,8 @@ function applyMove(move, send = false) {
   }
 
   renderBoard();
-  updateTurnInfo(chess, isAiEnabled);
-  checkEndGame(chess, identities, lastMove, isAiEnabled);
+  updateTurnInfo(chess, isAiEnabled, myColor);
+  setTimeout(() => checkEndGame(chess, identities, lastMove, isAiEnabled, myColor), 1500);
 }
 
 // ════════════════════════════════════════════════════════════════

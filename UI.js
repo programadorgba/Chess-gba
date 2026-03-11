@@ -9,14 +9,15 @@ import { recordGame } from './Stats.js';
 // ════════════════════════════════════════════════════════════════
 //  INFO DE TURNO
 // ════════════════════════════════════════════════════════════════
-export function updateTurnInfo(chess, isAiEnabled) {
+export function updateTurnInfo(chess, isAiEnabled, playerColor = 'w') {
   const el = document.getElementById('turn-info');
-  if      (chess.in_checkmate())                el.textContent = 'JAQUE MATE!';
-  else if (chess.in_draw())                     el.textContent = 'TABLAS';
-  else if (chess.in_check())                    el.textContent = 'JAQUE!';
-  else if (isAiEnabled && chess.turn() === 'b') el.textContent = 'Juega la IA...';
-  else if (chess.turn() === 'w')                el.textContent = 'Turno: Juegan BLANCAS';
-  else                                          el.textContent = 'Turno: Juegan NEGRAS';
+  const aiColor = playerColor === 'w' ? 'b' : 'w';
+  if      (chess.in_checkmate())                          el.textContent = 'JAQUE MATE!';
+  else if (chess.in_draw())                               el.textContent = 'TABLAS';
+  else if (chess.in_check())                              el.textContent = 'JAQUE!';
+  else if (isAiEnabled && chess.turn() === aiColor)       el.textContent = 'Juega la IA...';
+  else if (chess.turn() === 'w')                          el.textContent = 'Turno: Juegan BLANCAS';
+  else                                                    el.textContent = 'Turno: Juegan NEGRAS';
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -77,7 +78,7 @@ const DRAW_QUOTES = [
   'El tablero nos juzgo iguales. Por ahora.',
 ];
 
-export function checkEndGame(chess, identities, lastMove, isAiEnabled) {
+export function checkEndGame(chess, identities, lastMove, isAiEnabled, playerColor = 'w') {
   if (!chess.game_over()) return;
 
   const modalEl     = document.getElementById('modal-overlay');
@@ -111,13 +112,13 @@ export function checkEndGame(chess, identities, lastMove, isAiEnabled) {
     if (isAiEnabled) {
       // ── Registrar partida en historial ──────────────────────
       recordGame({
-        result: win === 'w' ? 'w' : 'l',
+        result: win === playerColor ? 'w' : 'l',
         level,
         moves: moveCount,
         mode:  'ai',
       });
 
-      if (win === 'w') {
+      if (win === playerColor) {
         const { streak } = recordWin();
         document.getElementById('level-value').textContent = getLevel();
         if (streak > 0) {
@@ -140,8 +141,8 @@ export function checkEndGame(chess, identities, lastMove, isAiEnabled) {
       streakEl.classList.add('hidden');
     }
 
-    labelEl.textContent    = isAiEnabled ? (win === 'w' ? 'VICTORIA' : 'DERROTA') : 'JAQUE MATE!';
-    labelEl.className      = 'modal-result-label ' + (win === 'w' ? 'victory' : 'defeat');
+    labelEl.textContent    = isAiEnabled ? (win === playerColor ? 'VICTORIA' : 'DERROTA') : 'JAQUE MATE!';
+    labelEl.className      = 'modal-result-label ' + (win === playerColor ? 'victory' : 'defeat');
     charNameEl.textContent = lore ? lore.name.toUpperCase() : '-';
     const q = VICTORY_QUOTES[pieceType] || VICTORY_QUOTES['p'];
     quoteEl.textContent    = q[Math.floor(Math.random() * q.length)];
