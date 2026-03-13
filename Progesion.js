@@ -84,9 +84,9 @@ export function recordWin() {
   }
 }
 
-/** Registra una derrota — resetea la racha, nivel intacto. */
+/** Registra una derrota — la racha NO se resetea, nivel intacto. */
 export function recordLoss() {
-  localStorage.setItem(KEY_STREAK, '0');
+  // La racha de victorias se mantiene aunque se pierda
 }
 
 /** Solo para debug/reset */

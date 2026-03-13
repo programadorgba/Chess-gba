@@ -106,12 +106,12 @@ function showPathScreen() {
   container.innerHTML = '';
 
   const W     = 320;
-  const H     = 620;
+  const H     = 600;
   const cols  = 4;
   const rows  = 5;
   const total = PATH_STOPS.length;
   const padX  = 44;
-  const padY  = 32;
+  const padY  = 28;
   const stepX = (W - padX * 2) / (cols - 1);
   const stepY = (H - padY * 2) / (rows - 1);
 
