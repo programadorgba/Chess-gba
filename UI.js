@@ -125,8 +125,9 @@ export function checkEndGame(
     wrapEl.style.display = "none";
   }
 
-  if (chess.in_checkmate()) {
-    const win = chess.turn() === "b" ? "w" : "b";
+let win = chess.turn() === 'b' ? 'w' : 'b';
+
+if (chess.in_checkmate()) {
 
     if (isAiEnabled) {
       // ── Registrar partida en historial ──────────────────────
@@ -189,5 +190,6 @@ export function checkEndGame(
     wrapEl.style.display = "none";
   }
 
-  modalEl.classList.remove("hidden");
+  const modalDelay = (isAiEnabled && win !== playerColor) ? 2000 : 0;
+setTimeout(() => modalEl.classList.remove('hidden'), modalDelay);
 }
